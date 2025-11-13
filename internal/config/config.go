@@ -22,7 +22,7 @@ type Database struct {
 	Port     string `yaml:"port"`
 	Username string `yaml:"username"`
 	Password string `yaml:"password"`
-	Database string `yaml:"database"`
+	Name     string `yaml:"database"`
 }
 
 type Log struct {
