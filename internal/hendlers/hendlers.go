@@ -1,4 +1,4 @@
-package internal
+package hendlers
 
 import (
 	"database/sql"
@@ -16,7 +16,7 @@ func CreateSubscriptions(c *gin.Context, db *sql.DB) {
 		return
 	}
 
-	if s.ServiceName == "" || s.Price <= 0 || s.UserID == "" || s.StartDate == "" {
+	if s.ServiceName == "" || s.Price <= 0 || s.UserName == "" || s.StartDate == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "missing or invalid fields"})
 		return
 	}
@@ -36,9 +36,9 @@ func CreateSubscriptions(c *gin.Context, db *sql.DB) {
 		end = &e
 	}
 	err = db.QueryRow(
-		`INSERT INTO subscriptions (service_name, price, user_id, start_date, end_date) 
+		`INSERT INTO subscriptions (service_name, price, user_name, start_date, end_date) 
 				VALUES ($1, $2, $3, $4, $5) RETURNING id`,
-		s.ServiceName, s.Price, s.UserID, start, end).Scan(&s.ID)
+		s.ServiceName, s.Price, s.UserName, start, end).Scan(&s.ID)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "database Create error: " + err.Error()})
@@ -48,7 +48,7 @@ func CreateSubscriptions(c *gin.Context, db *sql.DB) {
 }
 
 func ListSubscriptions(c *gin.Context, db *sql.DB) {
-	rows, err := db.Query(`SELECT id, service_name, price, user_id, start_date, end_date 
+	rows, err := db.Query(`SELECT id, service_name, price, user_name, start_date, end_date 
 								 FROM subscriptions`)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "database List error: " + err.Error()})
@@ -61,7 +61,7 @@ func ListSubscriptions(c *gin.Context, db *sql.DB) {
 		var s internal.Subscription
 		var start, end *time.Time
 
-		err = rows.Scan(&s.ID, &s.ServiceName, &s.Price, &s.UserID, &start, &end)
+		err = rows.Scan(&s.ID, &s.ServiceName, &s.Price, &s.UserName, &start, &end)
 
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "database List error: " + err.Error()})
@@ -86,8 +86,8 @@ func GetSubscription(c *gin.Context, db *sql.DB) {
 	var s internal.Subscription
 	var start, end *time.Time
 
-	err := db.QueryRow(`SELECT id, service_name, price, user_id, start_date, end_date 
-							  FROM subscriptions WHERE id = $1`, id).Scan(&s.ID, &s.ServiceName, &s.Price, &s.UserID, &start, &end)
+	err := db.QueryRow(`SELECT id, service_name, price, user_name, start_date, end_date 
+							  FROM subscriptions WHERE id = $1`, id).Scan(&s.ID, &s.ServiceName, &s.Price, &s.UserName, &start, &end)
 
 	if err == sql.ErrNoRows {
 		c.JSON(http.StatusNotFound, gin.H{"error": "subscription not found"})
@@ -126,7 +126,7 @@ func Summary(c *gin.Context, db *sql.DB) {
 	periodStart := c.Query("period_start")
 	periodEnd := c.Query("period_end")
 	serviceName := c.Query("service_name")
-	userId := c.Query("user_id")
+	userName := c.Query("user_name")
 
 	if periodStart == "" || periodEnd == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "missing or invalid fields"})
@@ -150,9 +150,9 @@ func Summary(c *gin.Context, db *sql.DB) {
 		argPos++
 	}
 
-	if userId != "" {
-		query += fmt.Sprintf(" AND user_id = $%d", argPos)
-		args = append(args, userId)
+	if userName != "" {
+		query += fmt.Sprintf(" AND user_name = $%d", argPos)
+		args = append(args, userName)
 		argPos++
 	}
 
