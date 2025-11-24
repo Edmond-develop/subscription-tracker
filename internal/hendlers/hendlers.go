@@ -51,7 +51,7 @@ func ListSubscriptions(c *gin.Context, db *sql.DB) {
 	rows, err := db.Query(`SELECT id, service_name, price, user_name, start_date, end_date 
 								 FROM subscriptions`)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "database List error: " + err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database List error: " + err.Error()})
 		return
 	}
 	defer rows.Close()
@@ -64,7 +64,7 @@ func ListSubscriptions(c *gin.Context, db *sql.DB) {
 		err = rows.Scan(&s.ID, &s.ServiceName, &s.Price, &s.UserName, &start, &end)
 
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "database List error: " + err.Error()})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Database List error: " + err.Error()})
 			return
 		}
 
@@ -95,7 +95,7 @@ func GetSubscription(c *gin.Context, db *sql.DB) {
 	}
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "database Get error: " + err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database Get error: " + err.Error()})
 		return
 	}
 
@@ -115,7 +115,7 @@ func DeleteSubscription(c *gin.Context, db *sql.DB) {
 	_, err := db.Exec(`DELETE FROM subscriptions WHERE id = $1`, id)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "database Delete error: " + err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database Delete error: " + err.Error()})
 		return
 	}
 
@@ -160,7 +160,7 @@ func Summary(c *gin.Context, db *sql.DB) {
 	err := db.QueryRow(query, args...).Scan(&total)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "database Summary error: " + err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database Summary error: " + err.Error()})
 		return
 	}
 
