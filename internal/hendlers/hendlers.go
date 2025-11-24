@@ -1,0 +1,168 @@
+package internal
+
+import (
+	"database/sql"
+	"fmt"
+	internal "github.com/Edmond-develop/subscription-tracker/internal/database"
+	"github.com/gin-gonic/gin"
+	"net/http"
+	"time"
+)
+
+func CreateSubscriptions(c *gin.Context, db *sql.DB) {
+	var s internal.Subscription
+	if err := c.ShouldBindJSON(&s); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid JSON: " + err.Error()})
+		return
+	}
+
+	if s.ServiceName == "" || s.Price <= 0 || s.UserID == "" || s.StartDate == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "missing or invalid fields"})
+		return
+	}
+
+	start, err := time.Parse("01-2006", s.StartDate)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid start_date format"})
+		return
+	}
+	var end *time.Time
+	if s.EndDate != "" {
+		e, err := time.Parse("01-2006", s.EndDate)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid end_date format"})
+			return
+		}
+		end = &e
+	}
+	err = db.QueryRow(
+		`INSERT INTO subscriptions (service_name, price, user_id, start_date, end_date) 
+				VALUES ($1, $2, $3, $4, $5) RETURNING id`,
+		s.ServiceName, s.Price, s.UserID, start, end).Scan(&s.ID)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "database Create error: " + err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, s)
+}
+
+func ListSubscriptions(c *gin.Context, db *sql.DB) {
+	rows, err := db.Query(`SELECT id, service_name, price, user_id, start_date, end_date 
+								 FROM subscriptions`)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "database List error: " + err.Error()})
+		return
+	}
+	defer rows.Close()
+	list := []internal.Subscription{}
+
+	for rows.Next() {
+		var s internal.Subscription
+		var start, end *time.Time
+
+		err = rows.Scan(&s.ID, &s.ServiceName, &s.Price, &s.UserID, &start, &end)
+
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "database List error: " + err.Error()})
+			return
+		}
+
+		if start != nil {
+			s.StartDate = start.Format("01-2006")
+		}
+
+		if end != nil {
+			s.EndDate = end.Format("01-2006")
+		}
+
+		list = append(list, s)
+	}
+	c.JSON(http.StatusOK, list)
+}
+
+func GetSubscription(c *gin.Context, db *sql.DB) {
+	id := c.Param("id")
+	var s internal.Subscription
+	var start, end *time.Time
+
+	err := db.QueryRow(`SELECT id, service_name, price, user_id, start_date, end_date 
+							  FROM subscriptions WHERE id = $1`, id).Scan(&s.ID, &s.ServiceName, &s.Price, &s.UserID, &start, &end)
+
+	if err == sql.ErrNoRows {
+		c.JSON(http.StatusNotFound, gin.H{"error": "subscription not found"})
+		return
+	}
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "database Get error: " + err.Error()})
+		return
+	}
+
+	if start != nil {
+		s.StartDate = start.Format("01-2006")
+	}
+
+	if end != nil {
+		s.EndDate = end.Format("01-2006")
+	}
+
+	c.JSON(http.StatusOK, s)
+}
+
+func DeleteSubscription(c *gin.Context, db *sql.DB) {
+	id := c.Param("id")
+	_, err := db.Exec(`DELETE FROM subscriptions WHERE id = $1`, id)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "database Delete error: " + err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "subscription deleted"})
+}
+
+func Summary(c *gin.Context, db *sql.DB) {
+	periodStart := c.Query("period_start")
+	periodEnd := c.Query("period_end")
+	serviceName := c.Query("service_name")
+	userId := c.Query("user_id")
+
+	if periodStart == "" || periodEnd == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "missing or invalid fields"})
+		return
+	}
+	start, err1 := time.Parse("01-2006", periodStart)
+	end, err2 := time.Parse("01-2006", periodEnd)
+	if err1 != nil || err2 != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid date format (MM-YYYY)"})
+		return
+	}
+
+	query := `SELECT SUM(price) FROM subscriptions WHERE start_date <= $2 AND (end_date IS NULL OR end_date >= $1)`
+
+	args := []interface{}{start, end}
+	argPos := 3
+
+	if serviceName != "" {
+		query += fmt.Sprintf(" AND service_name = $%d", argPos)
+		args = append(args, serviceName)
+		argPos++
+	}
+
+	if userId != "" {
+		query += fmt.Sprintf(" AND user_id = $%d", argPos)
+		args = append(args, userId)
+		argPos++
+	}
+
+	var total sql.NullInt64
+	err := db.QueryRow(query, args...).Scan(&total)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "database Summary error: " + err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"total_price": total.Int64})
+}

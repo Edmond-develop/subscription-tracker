@@ -1,12 +1,19 @@
 package main
 
 import (
-	internal "github.com/Edmond-develop/subscription-tracker/internal/config"
+	"fmt"
+	config "github.com/Edmond-develop/subscription-tracker/internal/config"
 	database "github.com/Edmond-develop/subscription-tracker/internal/database"
+	internal "github.com/Edmond-develop/subscription-tracker/internal/routes"
+	"log"
 )
 
 func main() {
-	cfg := internal.LoadConfig()
-	db := database.ConnectDB(cfg.Database.Name)
-	_ = db
+	cfg := config.LoadConfig()
+	db := database.ConnectDB(cfg)
+	router := internal.SetupRoutes(db)
+	if err := router.Run(":" + cfg.Server.Port); err != nil {
+		fmt.Println(cfg.Server.Port)
+		log.Fatal(err)
+	}
 }

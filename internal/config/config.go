@@ -1,7 +1,6 @@
 package internal
 
 import (
-	"github.com/joho/godotenv"
 	"gopkg.in/yaml.v3"
 	"log"
 	"os"
@@ -20,9 +19,9 @@ type Server struct {
 type Database struct {
 	Host     string `yaml:"host"`
 	Port     string `yaml:"port"`
-	Username string `yaml:"username"`
+	Username string `yaml:"user"`
 	Password string `yaml:"password"`
-	Name     string `yaml:"database"`
+	Name     string `yaml:"name"`
 }
 
 type Log struct {
@@ -30,7 +29,6 @@ type Log struct {
 }
 
 func LoadConfig() *Config {
-	godotenv.Load()
 	configPath := os.Getenv("CONFIG_PATH")
 	if configPath == "" {
 		log.Fatal("CONFIG_PATH environment variable not set")

@@ -2,8 +2,8 @@ server:
   port: 8080
 
 database:
-  host: localhost
-  port: 5432
+  host: db
+  port: "5432"
   user: ${DB_USER}
   password: ${DB_PASSWORD}
   name: subscriptions_db
