@@ -31,7 +31,7 @@ type Log struct {
 func LoadConfig() *Config {
 	configPath := os.Getenv("CONFIG_PATH")
 	if configPath == "" {
-		log.Fatal("CONFIG_PATH environment variable not set")
+		log.Fatal("error:", "CONFIG_PATH environment variable not set")
 	}
 	data, err := os.ReadFile(configPath)
 	if err != nil {
