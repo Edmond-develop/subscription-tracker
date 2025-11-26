@@ -9,6 +9,8 @@ import (
 	"time"
 )
 
+// @Summary Создать подписку
+// @Router /subscriptions [post]
 func CreateSubscriptions(c *gin.Context, db *sql.DB) {
 	var s internal.Subscription
 	if err := c.ShouldBindJSON(&s); err != nil {
@@ -47,6 +49,8 @@ func CreateSubscriptions(c *gin.Context, db *sql.DB) {
 	c.JSON(http.StatusOK, s)
 }
 
+// @Summary Получить список подписок
+// @Router /subscriptions [get]
 func ListSubscriptions(c *gin.Context, db *sql.DB) {
 	rows, err := db.Query(`SELECT id, service_name, price, user_name, start_date, end_date 
 								 FROM subscriptions`)
@@ -81,6 +85,8 @@ func ListSubscriptions(c *gin.Context, db *sql.DB) {
 	c.JSON(http.StatusOK, list)
 }
 
+// @Summary Получить подписку
+// @Router /subscriptions/{id} [get]
 func GetSubscription(c *gin.Context, db *sql.DB) {
 	id := c.Param("id")
 	var s internal.Subscription
@@ -110,6 +116,8 @@ func GetSubscription(c *gin.Context, db *sql.DB) {
 	c.JSON(http.StatusOK, s)
 }
 
+// @Summary Удалить подписку
+// @Router /subscriptions/{id} [delete]
 func DeleteSubscription(c *gin.Context, db *sql.DB) {
 	id := c.Param("id")
 	_, err := db.Exec(`DELETE FROM subscriptions WHERE id = $1`, id)
@@ -122,6 +130,8 @@ func DeleteSubscription(c *gin.Context, db *sql.DB) {
 	c.JSON(http.StatusOK, gin.H{"message": "subscription deleted"})
 }
 
+// @Summary Получить сумму подписок за период
+// @Router /subscriptions/summary [get]
 func Summary(c *gin.Context, db *sql.DB) {
 	periodStart := c.Query("period_start")
 	periodEnd := c.Query("period_end")

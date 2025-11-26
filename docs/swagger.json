@@ -1,0 +1,39 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "Простая документация для сервиса подписок",
+        "title": "Subscriptions API",
+        "contact": {},
+        "version": "1.0"
+    },
+    "host": "localhost:8080",
+    "basePath": "/",
+    "paths": {
+        "/subscriptions": {
+            "get": {
+                "summary": "Получить список подписок",
+                "responses": {}
+            },
+            "post": {
+                "summary": "Создать подписку",
+                "responses": {}
+            }
+        },
+        "/subscriptions/summary": {
+            "get": {
+                "summary": "Получить сумму подписок за период",
+                "responses": {}
+            }
+        },
+        "/subscriptions/{id}": {
+            "get": {
+                "summary": "Получить подписку",
+                "responses": {}
+            },
+            "delete": {
+                "summary": "Удалить подписку",
+                "responses": {}
+            }
+        }
+    }
+}

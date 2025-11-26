@@ -1,0 +1,27 @@
+basePath: /
+host: localhost:8080
+info:
+  contact: {}
+  description: Простая документация для сервиса подписок
+  title: Subscriptions API
+  version: "1.0"
+paths:
+  /subscriptions:
+    get:
+      responses: {}
+      summary: Получить список подписок
+    post:
+      responses: {}
+      summary: Создать подписку
+  /subscriptions/{id}:
+    delete:
+      responses: {}
+      summary: Удалить подписку
+    get:
+      responses: {}
+      summary: Получить подписку
+  /subscriptions/summary:
+    get:
+      responses: {}
+      summary: Получить сумму подписок за период
+swagger: "2.0"
