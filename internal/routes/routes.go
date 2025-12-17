@@ -1,19 +1,18 @@
 package routes
 
 import (
-	"database/sql"
-	internal "github.com/Edmond-develop/subscription-tracker/internal/hendlers"
+	"github.com/Edmond-develop/subscription-tracker/internal/controller"
 	"github.com/gin-gonic/gin"
 )
 
-func SetupRoutes(db *sql.DB) *gin.Engine {
+func SetupRoutes(handler *controller.SubscriptionHandler) *gin.Engine {
 	r := gin.Default()
 
-	r.POST("/subscriptions", func(c *gin.Context) { internal.CreateSubscriptions(c, db) })
-	r.GET("/subscriptions", func(c *gin.Context) { internal.ListSubscriptions(c, db) })
-	r.GET("/subscriptions/:id", func(c *gin.Context) { internal.GetSubscription(c, db) })
-	r.DELETE("/subscriptions/:id", func(c *gin.Context) { internal.DeleteSubscription(c, db) })
-	r.GET("/subscriptions/summary", func(c *gin.Context) { internal.Summary(c, db) })
+	r.POST("/subscriptions", handler.Create)
+	r.GET("/subscriptions", handler.GetAll)
+	r.GET("/subscriptions/:id", handler.GetID)
+	r.DELETE("/subscriptions/:id", handler.Delete)
+	r.GET("/subscriptions/summary", handler.Summary)
 
 	return r
 }
