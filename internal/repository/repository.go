@@ -7,28 +7,15 @@ import (
 	"time"
 )
 
-type SubscriptionRepository interface {
-	Create(sub *database.Subscription) error
-	GetAll() ([]database.Subscription, error)
-	GetID(id string) (*database.Subscription, error)
-	Delete(id string) error
-	Summary(
-		start time.Time,
-		end time.Time,
-		serviceName string,
-		userName string,
-	) (int64, error)
-}
-
-type subscriptionRepository struct {
+type SubscriptionRepository struct {
 	db *sql.DB
 }
 
-func NewSubscriptionRepository(db *sql.DB) SubscriptionRepository {
-	return &subscriptionRepository{db: db}
+func NewSubscriptionRepository(db *sql.DB) *SubscriptionRepository {
+	return &SubscriptionRepository{db: db}
 }
 
-func (s *subscriptionRepository) Create(sub *database.Subscription) error {
+func (s *SubscriptionRepository) Create(sub *database.Subscription) error {
 	err := s.db.QueryRow(
 		`INSERT INTO subscriptions (service_name, price, user_name, start_date, end_date) 
 			   VALUES ($1, $2, $3, $4, $5) RETURNING id`,
@@ -36,7 +23,7 @@ func (s *subscriptionRepository) Create(sub *database.Subscription) error {
 	return err
 }
 
-func (s *subscriptionRepository) GetAll() ([]database.Subscription, error) {
+func (s *SubscriptionRepository) GetAll() ([]database.Subscription, error) {
 	query := `SELECT id, service_name, price, user_name, start_date, end_date FROM subscriptions`
 
 	rows, err := s.db.Query(query)
@@ -61,7 +48,7 @@ func (s *subscriptionRepository) GetAll() ([]database.Subscription, error) {
 	return subscriptions, nil
 }
 
-func (s *subscriptionRepository) GetID(id string) (*database.Subscription, error) {
+func (s *SubscriptionRepository) GetID(id string) (*database.Subscription, error) {
 	query := `SELECT id, service_name, price, user_name, start_date, end_date FROM subscriptions WHERE id = $1`
 
 	row := s.db.QueryRow(query, id)
@@ -81,13 +68,13 @@ func (s *subscriptionRepository) GetID(id string) (*database.Subscription, error
 	return &sub, nil
 }
 
-func (s *subscriptionRepository) Delete(id string) error {
+func (s *SubscriptionRepository) Delete(id string) error {
 	query := `DELETE FROM subscriptions WHERE id = $1`
 	_, err := s.db.Exec(query, id)
 	return err
 }
 
-func (s *subscriptionRepository) Summary(start time.Time, end time.Time, serviceName string, userName string) (int64, error) {
+func (s *SubscriptionRepository) Summary(start time.Time, end time.Time, serviceName string, userName string) (int64, error) {
 	query := `SELECT SUM(price) FROM subscriptions WHERE start_date <= $2 AND (end_date IS NULL OR end_date >= $1)`
 
 	args := []interface{}{start, end}
